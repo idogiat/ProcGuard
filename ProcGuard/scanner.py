@@ -6,12 +6,13 @@ from datetime import datetime
 
 PS_CMD = ["ps", "-eo", "pid,ppid,comm,etime,%cpu,%mem,rss,vsz,stat,flags ", "--sort=-%mem"]
 PARTS_COUNT = 10
-DB_NAME = "ps_snapshot.db"
+DB_PATH = "ps_snapshot.db"
+DB_NAME = "snapshots"
 MAX_LINES = 2000
 
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -39,7 +40,7 @@ def get_top_process():
     result = subprocess.run(PS_CMD, stdout=subprocess.PIPE, text=True)
     lines = result.stdout.strip().split('\n')[1:]
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     timestamp = datetime.now().strftime("%d-%m %H:%M")
 

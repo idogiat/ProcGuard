@@ -49,6 +49,13 @@ private:
 
 public:
     static ProcStatusMgr& getInstance(void);
+
+    /*
+    * @brief: Add new process id to shared memory.
+    * @retval: id index in memory else 0
+    */
+    int addPid(pid_t pid);
+
     void setStatus(pid_t pid, ProcStatus status);
     void removeStatus(pid_t pid);
     ProcStatus getStatus(pid_t pid);

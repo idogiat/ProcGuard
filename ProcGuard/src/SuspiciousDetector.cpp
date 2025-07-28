@@ -28,14 +28,20 @@ int main()
         {
             int pid = std::get<0>(r);
             std::cout << "ID: " << pid  << " CPU: " << std::get<1>(r) << std::endl;
-            ps_mgr.setStatus(pid, ProcStatus::WAITING);
+            if(ps_mgr.addPid(pid) != 0)
+            {
+
+            }
         }
         auto result2 = db->getMaxMEM(DB_NAME, MAX_THREADS);
         for (auto r : result2)
         {
             int pid = std::get<0>(r);
             std::cout << "ID: " << pid << " MEM: " << std::get<1>(r) << std::endl;
-            ps_mgr.setStatus(pid, ProcStatus::WAITING);
+            if(ps_mgr.addPid(pid) != 0)
+            {
+                
+            }
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }

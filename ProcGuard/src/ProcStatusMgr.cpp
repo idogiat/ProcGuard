@@ -6,12 +6,43 @@
 #include <sys/stat.h>
 #include <stdexcept>
 #include <cstring>
+#include <iostream>
 
 
 ProcStatusMgr& ProcStatusMgr::getInstance(void)
 {
     static ProcStatusMgr instance;
     return instance;
+}
+
+int ProcStatusMgr::addPid(pid_t pid)
+{
+    int index = 0;
+    pthread_mutex_lock(&shm_ptr_->lock);
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].pid == pid)
+        {
+            pthread_mutex_unlock(&shm_ptr_->lock);
+            return index;
+        }
+    }
+
+    if (shm_ptr_->p_count < MAX_PROCESSES)
+    {
+        index = shm_ptr_->p_count;
+        shm_ptr_->entries[index].pid = pid;
+        shm_ptr_->entries[index].status = ProcStatus::WAITING;
+        shm_ptr_->entries[index].active = true;
+        shm_ptr_->p_count++;
+    }
+    else
+    {
+        std::cerr << "Failed set status, memory is full" << std::endl;
+    }
+
+    pthread_mutex_unlock(&shm_ptr_->lock);
+    return index;
 }
 
 void ProcStatusMgr::setStatus(pid_t pid, ProcStatus status)
@@ -28,19 +59,8 @@ void ProcStatusMgr::setStatus(pid_t pid, ProcStatus status)
         }
     }
 
-    if (shm_ptr_->p_count < MAX_PROCESSES)
-    {
-        shm_ptr_->entries[shm_ptr_->p_count].pid = pid;
-        shm_ptr_->entries[shm_ptr_->p_count].status = status;
-        shm_ptr_->entries[shm_ptr_->p_count].active = true;
-        shm_ptr_->p_count++;
-        pthread_mutex_unlock(&shm_ptr_->lock);
-    }
-    else
-    {
-        pthread_mutex_unlock(&shm_ptr_->lock);
-        throw std::runtime_error("Failed set status, memory is full");
-    }
+    pthread_mutex_unlock(&shm_ptr_->lock);
+    throw std::runtime_error("Failed set status, pid not exists");
 }
 
 ProcStatus ProcStatusMgr::getStatus(pid_t pid)

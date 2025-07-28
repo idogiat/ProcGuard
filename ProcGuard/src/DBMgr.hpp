@@ -19,7 +19,7 @@
 #define F_flags   "flags"
 
 
-class DBManager
+class DBMgr
 {
 private:
     sqlite3 *db;
@@ -29,8 +29,8 @@ private:
     std::vector<std::string> executeQuery(const std::string& query);
     std::vector<std::tuple<int, float>> getField(const std::string &db_name, const std::string &field, int limit);
 public:
-    DBManager(const std::string& db_path);
-    ~DBManager();
+    DBMgr(const std::string& db_path);
+    ~DBMgr();
 
     std::vector<std::tuple<int, float>> getMaxCPU(const std::string &db_name, int limit = -1);
     std::vector<std::tuple<int, float>> getMaxMEM(const std::string &db_name, int limit = -1);

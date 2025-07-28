@@ -1,7 +1,7 @@
-#include "DBManager.hpp"
+#include "DBMgr.hpp"
 #include <boost/algorithm/string.hpp>
 
-DBManager::DBManager(const std::string& db_path): db_path(db_path), db(nullptr)
+DBMgr::DBMgr(const std::string& db_path): db_path(db_path), db(nullptr)
 {
     std::lock_guard<std::mutex> lock(mtx);
     if(sqlite3_open(db_path.c_str(), &db) != SQLITE_OK)
@@ -11,7 +11,7 @@ DBManager::DBManager(const std::string& db_path): db_path(db_path), db(nullptr)
     }
 }
 
-DBManager::~DBManager()
+DBMgr::~DBMgr()
 {
     if (db)
     {
@@ -20,7 +20,7 @@ DBManager::~DBManager()
 }
 
 
-std::vector<std::string> DBManager::executeQuery(const std::string& query)
+std::vector<std::string> DBMgr::executeQuery(const std::string& query)
 {
     std::lock_guard<std::mutex> lock(mtx);
     std::vector<std::string> results;
@@ -59,7 +59,7 @@ std::vector<std::string> DBManager::executeQuery(const std::string& query)
 }
 
 
-std::vector<std::tuple<int, float>> DBManager::getField(const std::string &db_name, const std::string &field, int limit)
+std::vector<std::tuple<int, float>> DBMgr::getField(const std::string &db_name, const std::string &field, int limit)
 {
     std::vector<std::tuple<int, float>> results;
     std::vector<std::string> general_results;
@@ -97,12 +97,12 @@ std::vector<std::tuple<int, float>> DBManager::getField(const std::string &db_na
     return results;
 }
 
-std::vector<std::tuple<int, float>> DBManager::getMaxCPU(const std::string &db_name, int limit)
+std::vector<std::tuple<int, float>> DBMgr::getMaxCPU(const std::string &db_name, int limit)
 {
     return getField(db_name, F_CPU, limit);
 }
 
-std::vector<std::tuple<int, float>> DBManager::getMaxMEM(const std::string &db_name, int limit)
+std::vector<std::tuple<int, float>> DBMgr::getMaxMEM(const std::string &db_name, int limit)
 {
     return getField(db_name, F_MEMORY, limit);
 

@@ -15,6 +15,7 @@ enum class ProcStatus : uint8_t
     WAITING = 1,
     CHECKING = 2,
     WARNING = 3,
+    NOT_EXISTS = 0xFF,
 };
 
 struct PidEntry
@@ -28,6 +29,7 @@ struct ProcStatusShm
 {
     pthread_mutex_t lock;
     std::atomic<int> ref_count;
+    uint8_t p_count;
     PidEntry entries[MAX_PROCESSES];
 };
 
@@ -44,8 +46,8 @@ private:
     void initMutex();
     ProcStatusMgr();
     ~ProcStatusMgr();
-public:
 
+public:
     static ProcStatusMgr& getInstance(void);
     void setStatus(pid_t pid, ProcStatus status);
     void removeStatus(pid_t pid);

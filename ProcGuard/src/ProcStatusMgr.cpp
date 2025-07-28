@@ -16,12 +16,67 @@ ProcStatusMgr& ProcStatusMgr::getInstance(void)
 
 void ProcStatusMgr::setStatus(pid_t pid, ProcStatus status)
 {
+    pthread_mutex_lock(&shm_ptr_->lock);
 
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].active && shm_ptr_->entries[i].pid == pid)
+        {
+            shm_ptr_->entries[i].status = status;
+            pthread_mutex_unlock(&shm_ptr_->lock);
+            return;
+        }
+    }
+
+    if (shm_ptr_->p_count < MAX_PROCESSES)
+    {
+        shm_ptr_->entries[shm_ptr_->p_count].pid = pid;
+        shm_ptr_->entries[shm_ptr_->p_count].status = status;
+        shm_ptr_->entries[shm_ptr_->p_count].active = true;
+        shm_ptr_->p_count++;
+        pthread_mutex_unlock(&shm_ptr_->lock);
+    }
+    else
+    {
+        pthread_mutex_unlock(&shm_ptr_->lock);
+        throw std::runtime_error("Failed set status, memory is full");
+    }
 }
 
 ProcStatus ProcStatusMgr::getStatus(pid_t pid)
 {
+    ProcStatus status = ProcStatus::NOT_EXISTS;
+    pthread_mutex_lock(&shm_ptr_->lock);
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].pid == pid)
+        {
+            status = shm_ptr_->entries[i].status;
+            break;
+        }
+    }
+    
+    pthread_mutex_unlock(&shm_ptr_->lock);
+    return status;
+}
 
+void ProcStatusMgr::removeStatus(pid_t pid)
+{
+    pthread_mutex_lock(&shm_ptr_->lock);
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].pid == pid)
+        {
+            shm_ptr_->entries[i].status = shm_ptr_->entries[shm_ptr_->p_count].status;
+            shm_ptr_->entries[i].pid = shm_ptr_->entries[shm_ptr_->p_count].pid;
+            shm_ptr_->entries[i].active = shm_ptr_->entries[shm_ptr_->p_count].active;
+            shm_ptr_->entries[shm_ptr_->p_count].active = false;
+            shm_ptr_->p_count--;
+            break;
+        }
+    }
+    
+    pthread_mutex_unlock(&shm_ptr_->lock);
 }
 
 // Private functions

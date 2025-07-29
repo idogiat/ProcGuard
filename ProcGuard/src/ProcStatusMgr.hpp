@@ -1,5 +1,5 @@
 #pragma once
-
+#include "common.h"
 #include <cstdint>
 #include <string>
 #include <pthread.h>
@@ -8,15 +8,6 @@
 
 constexpr size_t MAX_PROCESSES = 256;
 
-
-enum class ProcStatus : uint8_t
-{
-    OK = 0,
-    WAITING = 1,
-    CHECKING = 2,
-    WARNING = 3,
-    NOT_EXISTS = 0xFF,
-};
 
 struct PidEntry
 {

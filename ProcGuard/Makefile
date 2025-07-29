@@ -1,29 +1,39 @@
-CXX = g++
+CXX := g++
 LDLIBS = -lsqlite3
-CFLAGS = -Wall -Wextra -O2 -std=c++17
-TARGETS = procguard SuspiciousDetector
+CXXFLAGS := -std=c++17 -Wall -Wextra -I./src/include
 
-SRC_DIR = ./src
-OBJ_DIR = ./obj
-BIN_DIR = ./bin
+SRC_DIR := src
+COMMON_DIR := $(SRC_DIR)/common
+TARGETS_DIR := $(SRC_DIR)/targets
+BUILD_DIR := build
 
-SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp)
-OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
-BIN_TARGETS = $(patsubst %, $(BIN_DIR)/%, $(TARGETS))
+COMMON_SRCS := $(wildcard $(COMMON_DIR)/*.cpp)
+COMMON_OBJS := $(patsubst $(COMMON_DIR)/%.cpp,$(BUILD_DIR)/common/%.o,$(COMMON_SRCS))
 
-all: $(BIN_TARGETS)
+TARGET_SRCS := $(wildcard $(TARGETS_DIR)/*.cpp)
+TARGET_NAMES := $(notdir $(TARGET_SRCS:.cpp=))
+TARGET_BINS := $(patsubst %,$(BUILD_DIR)/targets/%,$(TARGET_NAMES))
 
-$(BIN_TARGETS): $(OBJ_FILES) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS)
+# Default target
+all: $(TARGET_BINS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+# Rule to build each target binary
+$(BUILD_DIR)/targets/%: $(TARGETS_DIR)/%.cpp $(COMMON_OBJS) | $(BUILD_DIR)/targets
+	$(CXX) $(CXXFLAGS) $< $(COMMON_OBJS) -o $@ $(LDLIBS)
+
+# Compile common .cpp to .o
+$(BUILD_DIR)/common/%.o: $(COMMON_DIR)/%.cpp | $(BUILD_DIR)/common
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+# Create necessary directories
+$(BUILD_DIR)/common:
+	mkdir -p $@
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+$(BUILD_DIR)/targets:
+	mkdir -p $@
 
+# Clean
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)	
+	rm -rf $(BUILD_DIR)
+
+.PHONY: all clean

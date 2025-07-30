@@ -14,27 +14,17 @@ MsgQueue::MsgQueue()
 
 MsgQueue::~MsgQueue() {}
 
-void MsgQueue::send(const Msg_t& msg)
+int MsgQueue::send(const Msg_t& msg)
 {
-    if (msgsnd(msqid_, &msg, sizeof(Msg_t), 0) == -1)
-    {
-        throw std::runtime_error("msgsnd failed");
-    }
+    return msgsnd(msqid_, &msg, sizeof(Msg_t), 0);
 }
 
-void MsgQueue::receive(Msg_t& msg)
+ssize_t MsgQueue::receive(Msg_t& msg)
 {
-    ssize_t ret = msgrcv(msqid_, &msg, sizeof(Msg_t), 0, 0);
-    if (ret == -1)
-    {
-        throw std::runtime_error("msgrcv failed");
-    }
+    return msgrcv(msqid_, &msg, sizeof(Msg_t), 0, 0);
 }
 
-void MsgQueue::remove()
+int MsgQueue::remove()
 {
-    if (msgctl(msqid_, IPC_RMID, nullptr) == -1)
-    {
-        throw std::runtime_error("msgctl IPC_RMID failed");
-    }
+    return msgctl(msqid_, IPC_RMID, nullptr);
 }

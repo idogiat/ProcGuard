@@ -24,8 +24,6 @@ std::vector<std::string> DBMgr::executeQuery(const std::string& query)
 {
     std::lock_guard<std::mutex> lock(mtx);
     std::vector<std::string> results;
-
-    char* err_msg = nullptr;
     sqlite3_stmt* stmt = nullptr;
 
     // make query

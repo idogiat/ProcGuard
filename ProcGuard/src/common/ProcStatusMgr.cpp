@@ -17,7 +17,7 @@ ProcStatusMgr& ProcStatusMgr::getInstance(void)
 
 int ProcStatusMgr::addPid(pid_t pid)
 {
-    int index = 0;
+    int index = -1;
     pthread_mutex_lock(&shm_ptr_->lock);
     for (size_t i = 0; i < shm_ptr_->p_count; ++i)
     {

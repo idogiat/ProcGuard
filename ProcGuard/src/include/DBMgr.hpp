@@ -22,9 +22,9 @@
 class DBMgr
 {
 private:
-    sqlite3 *db;
     std::string db_path;
     std::mutex mtx;
+    sqlite3 *db;
 
     std::vector<std::string> executeQuery(const std::string& query);
     std::vector<std::tuple<int, float>> getField(const std::string &db_name, const std::string &field, int limit);

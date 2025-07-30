@@ -18,9 +18,20 @@ public:
     MsgQueue();
     ~MsgQueue();
 
-    void send(const Msg_t& msg);
-    void receive(Msg_t& out_msg_t);
-    void remove();
+    /* send msg to queue
+     * return -1 if field
+    */
+    int send(const Msg_t& msg);
+    
+    /* recieve msg from queue
+     * return -1 if field
+    */
+    ssize_t receive(Msg_t& out_msg_t);
+
+    /* remove queue from memory (optional)
+    * return -1 if field
+    */
+    int remove();
 
 private:
     int msqid_;

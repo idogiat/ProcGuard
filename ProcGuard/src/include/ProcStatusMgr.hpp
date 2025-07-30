@@ -16,23 +16,23 @@ struct PidEntry
     bool active;
 };
 
-struct ProcStatusShm
-{
-    pthread_mutex_t lock;
-    std::atomic<int> ref_count;
-    uint8_t p_count;
-    PidEntry entries[MAX_PROCESSES];
-};
-
 
 class ProcStatusMgr
 {
-private:
+    private:
+    struct ProcStatusShm
+    {
+        pthread_mutex_t lock;
+        std::atomic<int> ref_count;
+        uint8_t p_count;
+        PidEntry entries[MAX_PROCESSES];
+    };
+    
     int shm_fd_ = -1;
     ProcStatusShm* shm_ptr_ = nullptr;
     const std::string shm_name_ = "/proc_guard_shm";
     bool created_ = false;
-
+    
     void initSharedMemory();
     void initMutex();
     ProcStatusMgr();

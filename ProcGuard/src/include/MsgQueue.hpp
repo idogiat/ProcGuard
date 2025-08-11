@@ -14,7 +14,7 @@ struct Msg_t {
     */
     std::string get_log_file_path() const
     {
-        return "/tmp/procguard_log/" + std::to_string(pid) + ".log";
+        return "/tmp/procguard_log/pid_" + std::to_string(pid) + ".log";
     }
 
     /*
@@ -22,7 +22,7 @@ struct Msg_t {
     */
     std::string get_json_file_path() const
     {
-        return "/tmp/procguard_json/" + std::to_string(pid) + ".json";
+        return "/tmp/procguard_json/pid_" + std::to_string(pid) + ".json";
     }
 
     void delete_tmp_files() const

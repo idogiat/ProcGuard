@@ -13,35 +13,15 @@
 
 std::vector<pid_t> children;
 
-// Watch a single process for changes
-void watch_process(pid_t pid) {
-    int status;
-    std::cout << "Watching process " << pid << std::endl;
-
-    // Wait for the process to terminate
-    waitpid(pid, &status, 0);
-
-    if (WIFEXITED(status)) {
-        std::cout << "Process " << pid << " exited with code " << WEXITSTATUS(status) << std::endl;
-    } else if (WIFSIGNALED(status)) {
-        std::cout << "Process " << pid << " was killed by signal " << WTERMSIG(status) << std::endl;
-    } else {
-        std::cout << "Process " << pid << " ended unexpectedly." << std::endl;
-    }
-}
-
 // Watch a process with strace, write output to file, and call Python script to process results
-void watch_process_with_strace(pid_t target_pid, const std::string& strace_log, const std::string& python_script, const std::string& json_file) {
+void watch_process_with_strace(pid_t target_pid, const std::string& python_script, const std::string& strace_log, const std::string& json_file)
+{
     std::cout << "Starting strace on PID " << target_pid << std::endl;
 
 
     // Build strace command
-    std::string strace_cmd = "sudo timeout 5 strace -e trace=all -f -s 0 -yy -ttt -o " + strace_log + " -p " + std::to_string(target_pid);
+    std::string strace_cmd = "sudo timeout 5s strace -e trace=all -f -s 0 -yy -ttt -o " + strace_log + " -p " + std::to_string(target_pid);
     int ret = system(strace_cmd.c_str());
-    if (ret != 0) {
-        std::cerr << "strace failed or timed out for PID " << target_pid << std::endl;
-        return;
-    }
 
     // Build python command
     std::string python_cmd = "python3 " + python_script + " -s " + strace_log + " -j " + json_file;
@@ -76,7 +56,7 @@ int main()
 {
     MsgQueue mq;
     ProcStatusMgr &shm = ProcStatusMgr::getInstance();
-    auto full_path = std::filesystem::absolute(STRACE_FILTER_SCRIPT);
+    auto strace_filter_script = std::filesystem::absolute(STRACE_FILTER_SCRIPT);
 
     std::cout << "MsgHandler started. Waiting for messages..." << std::endl;
 
@@ -100,7 +80,7 @@ int main()
             {
                 ensure_log_path_exists(msg.get_log_file_path());
                 watch_process_with_strace(msg.pid,
-                                          STRACE_FILTER_SCRIPT,
+                                          strace_filter_script.string(),
                                           msg.get_log_file_path(),
                                           msg.get_json_file_path());
                 exit(0);
@@ -110,7 +90,6 @@ int main()
                 // parent
                 children.push_back(pid);
                 std::cout << "Started watcher process for PID " << msg.pid << " (watcher PID: " << pid << ")" << std::endl;
-
             }
         }
     }

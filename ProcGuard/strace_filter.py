@@ -109,7 +109,7 @@ def append_to_json(json_file: str, syscalls: List[SyscallData], signals: List[Si
         with open(json_file, "r") as f:
             data: List = json.load(f)
     else:
-        os.makedirs(json_file, exist_ok=True)
+        os.makedirs(os.path.dirname(json_file), exist_ok=True)
 
     # Create a new entry with the current timestamp and counts
     new_data = {

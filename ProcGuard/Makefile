@@ -1,5 +1,5 @@
 CXX := g++
-LDLIBS = -lsqlite3
+LDLIBS = -lsqlite3 -lpthread -lrt -lstdc++fs
 CXXFLAGS := -std=c++17 -Wall -Wextra -I./src/include
 
 SRC_DIR := src

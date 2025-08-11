@@ -3,10 +3,40 @@
 #include <sys/msg.h>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 
 struct Msg_t {
     int pid;
     ProcType type;
+    
+    /*
+    * get log file path
+    */
+    std::string get_log_file_path() const
+    {
+        return "/tmp/procguard_log/" + std::to_string(pid) + ".log";
+    }
+
+    /*
+    * get json file path (to save syscalls and signals)
+    */
+    std::string get_json_file_path() const
+    {
+        return "/tmp/procguard_json/" + std::to_string(pid) + ".json";
+    }
+
+    void delete_tmp_files() const
+    {
+        std::string log_file = get_log_file_path();
+        std::string json_file = get_json_file_path();
+
+        if (remove(log_file.c_str()) != 0) {
+            perror(("Failed to remove log file: " + log_file).c_str());
+        }
+        if (remove(json_file.c_str()) != 0) {
+            perror(("Failed to remove json file: " + json_file).c_str());
+        }
+    }
 };
 
 class MsgQueue {

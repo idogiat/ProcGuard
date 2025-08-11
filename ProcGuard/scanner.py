@@ -46,7 +46,6 @@ def get_top_process():
 
     for line in lines:
         parts = line.split(None, PARTS_COUNT)
-        print(parts)
 
         if len(parts) == PARTS_COUNT:
             pid, ppid, comm, etime, cpu, mem, rss, vsz, stat, flags = parts

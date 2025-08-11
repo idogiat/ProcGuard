@@ -26,5 +26,6 @@ ssize_t MsgQueue::receive(Msg_t& msg)
 
 int MsgQueue::remove()
 {
+    
     return msgctl(msqid_, IPC_RMID, nullptr);
 }

@@ -28,7 +28,7 @@ int ProcStatusMgr::addPid(pid_t pid)
         }
     }
 
-    if (shm_ptr_->p_count < MAX_PROCESSES)
+    if (shm_ptr_->p_count < ProcStatusMgr::MAX_PROCESSES)
     {
         index = shm_ptr_->p_count;
         shm_ptr_->entries[index].pid = pid;

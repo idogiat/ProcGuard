@@ -1,5 +1,6 @@
 #include "DBMgr.hpp"
 #include "ProcStatusMgr.hpp"
+#include "ProcBlackList.hpp"
 #include "MsgQueue.hpp"
 #include "common.h"
 #include <thread>
@@ -24,6 +25,7 @@ int main()
     signal(SIGINT, handle_signal);
     DBMgr *db = new DBMgr(DB_PATH);
     ProcStatusMgr &ps_mgr = ProcStatusMgr::getInstance();
+    ProcBlackList &ps_bl = ProcBlackList::getInstance();
     mq = new MsgQueue();
 
     while (running)
@@ -32,22 +34,29 @@ int main()
         for (auto r : result1)
         {
             int pid = std::get<0>(r);
-            if(ps_mgr.addPid(pid) != -1)
+            if (!ps_bl.isExists(pid))
             {
-                Msg_t m = {pid, ProcType::CPU};
-                mq->send(m);
-                std::cout << "ID: " << pid  << " CPU: " << std::get<1>(r) << std::endl;
+                if(ps_mgr.addPid(pid) != -1)
+                {
+                    Msg_t m = {pid, ProcType::CPU};
+                    mq->send(m);
+                    std::cout << "ID: " << pid  << " CPU: " << std::get<1>(r) << std::endl;
+                }
             }
         }
         auto result2 = db->getMaxMEM(DB_NAME, MAX_THREADS);
         for (auto r : result2)
         {
             int pid = std::get<0>(r);
-            if(ps_mgr.addPid(pid) != -1)
+            if (!ps_bl.isExists(pid))
             {
-                Msg_t m = {pid, ProcType::MEMORY};
-                mq->send(m);
-                std::cout << "ID: " << pid << " MEM: " << std::get<1>(r) << std::endl;
+                // Check if the process is already being monitored
+                if(ps_mgr.addPid(pid) != -1)
+                {
+                    Msg_t m = {pid, ProcType::MEMORY};
+                    mq->send(m);
+                    std::cout << "ID: " << pid << " MEM: " << std::get<1>(r) << std::endl;
+                }
             }
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));

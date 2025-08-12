@@ -6,9 +6,6 @@
 #include <atomic>
 
 
-constexpr size_t MAX_PROCESSES = 256;
-
-
 struct PidEntry
 {
     pid_t pid;
@@ -20,6 +17,7 @@ struct PidEntry
 class ProcStatusMgr
 {
     private:
+    static constexpr size_t MAX_PROCESSES = 256;
     struct ProcStatusShm
     {
         pthread_mutex_t lock;

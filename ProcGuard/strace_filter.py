@@ -102,15 +102,6 @@ def get_signals(content: str) -> List[SignalData]:
 
     return result
 
-
-def combine_and_order_by_timestamp(syscalls: List[SyscallData], signals: List[SignalData]) -> List[dict]:
-    # Convert namedtuples to dicts for easier handling
-    combined = [s._asdict() for s in syscalls] + [s._asdict() for s in signals]
-    # Sort by timestamp (convert to float for correct ordering)
-    combined.sort(key=lambda x: float(x["timestamp"]))
-    return combined
-
-
 def append_to_json(json_file: str, syscalls: List[SyscallData], signals: List[SignalData]) -> None:
     
     data = []
@@ -125,7 +116,8 @@ def append_to_json(json_file: str, syscalls: List[SyscallData], signals: List[Si
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "syscall_count": len(syscalls),
         "signal_count": len(signals),
-        "data" : combine_and_order_by_timestamp(syscalls, signals)
+        "syscalls": [s._asdict() for s in syscalls],
+        "signals": [s._asdict() for s in signals],
     }
     
     with open(json_file, "w") as f:        
@@ -134,13 +126,10 @@ def append_to_json(json_file: str, syscalls: List[SyscallData], signals: List[Si
 
     
 if __name__ == "__main__":
-
-
     parser = argparse.ArgumentParser("strace_filter")
     parser.add_argument("-s", "--strace_file", type=str, required=True, help="strace log file with data to parse")
     parser.add_argument("-j", "--json_file", type=str, required=True, help="json file to save the data")
     args = parser.parse_args()
-
 
     with open(args.strace_file, 'r') as f:
         content = f.read()

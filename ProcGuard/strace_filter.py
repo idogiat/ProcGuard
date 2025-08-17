@@ -35,23 +35,27 @@ def get_syscalls(content: str) -> List[SyscallData]:
     Returns:
         List[SyscallData]: commands as named tuple.
     """
-    line_pattern = r'(\d+)\s+([\d.]+)\s+(\w+)\((.*?)\)\s+=\s+(.+)\n'
+    line_pattern = r'(\d+)\s+([\d.]+)\s+(\w+)\((.*?)\)\s+=\s+(0?x?\-?\d+)(\s+.*)?\n'
     matches = re.findall(line_pattern, content)
     
     result: List[SyscallData] = []
     for line in matches:
-        pid = line[0]
-        timestamp = line[1]
-        syscall = line[2]
-        args = line[3]
-        retval = line[4]
+        try:
+            pid = line[0]
+            timestamp = line[1]
+            syscall = line[2]
+            args = line[3]
+            retval = line[4]
 
-        if "x" in retval:
-            retval = int(retval, 16)
-        else:
-            retval = int(retval)
-        
-        result.append(SyscallData(pid=int(pid), timestamp=timestamp, syscall=syscall, args=args, retval=retval))
+            if "x" in retval:
+                retval = int(retval, 16)
+            else:
+                retval = int(retval)
+            
+            result.append(SyscallData(pid=int(pid), timestamp=timestamp, syscall=syscall, args=args, retval=retval))
+        except Exception as e:
+            print(f"Error parsing syscall line: {line}. Error: {e}")
+            raise e
     
     return result
 
@@ -71,25 +75,30 @@ def get_signals(content: str) -> List[SignalData]:
 
     result: List[SignalData] = []
     for line in matches:
-        pid = int(line[0])
-        timestamp = line[1]
-        signal_name = line[2]
-        si_signo = line[3]
-        si_code = line[4]
-        si_pid = int(line[5])
-        si_uid = int(line[6])
 
-        result.append(
-            SignalData(
-                pid=pid,
-                timestamp=timestamp,
-                signal_name=signal_name,
-                si_signo=si_signo,
-                si_code=si_code,
-                si_pid=si_pid,
-                si_uid=si_uid,
+        try:
+            pid = int(line[0])
+            timestamp = line[1]
+            signal_name = line[2]
+            si_signo = line[3]
+            si_code = line[4]
+            si_pid = int(line[5])
+            si_uid = int(line[6])
+
+            result.append(
+                SignalData(
+                    pid=pid,
+                    timestamp=timestamp,
+                    signal_name=signal_name,
+                    si_signo=si_signo,
+                    si_code=si_code,
+                    si_pid=si_pid,
+                    si_uid=si_uid,
+                )
             )
-        )
+        except Exception as e:
+            print(f"Error parsing signal line: {line}. Error: {e}")
+            raise e
 
     return result
 

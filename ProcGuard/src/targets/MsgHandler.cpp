@@ -12,12 +12,18 @@
 
 #define STRACE_FILTER_SCRIPT "strace_filter.py"
 
-static void watch_process_with_strace(pid_t target_pid, const std::string& python_script, const std::string& strace_log, const std::string& json_file);
+
+
+static void watch_process_with_strace(pid_t target_pid,
+                                      const std::string& python_script,
+                                      const std::string& strace_log,
+                                      const std::string& json_file);
 static void ensure_log_path_exists(const std::string& log_path);
 
 static std::vector<pid_t> children;
 static ProcBlackList &ps_bl = ProcBlackList::getInstance();
-
+static constexpr int max_iterations = 3; // Number of iterations to run strace
+static constexpr int wait_seconds = 1; // Maximum wait time in seconds for strace to finish
 
 static void signal_handler(int signum)
 {
@@ -83,24 +89,31 @@ int main()
 }
 
 // Watch a process with strace, write output to file, and call Python script to process results
-static void watch_process_with_strace(pid_t target_pid, const std::string& python_script, const std::string& strace_log, const std::string& json_file)
+static void watch_process_with_strace(pid_t target_pid,
+                                      const std::string& python_script,
+                                      const std::string& strace_log,
+                                      const std::string& json_file)
 {
     std::cout << "Starting strace on PID " << target_pid << std::endl;
 
-
     // Build strace command
     std::string strace_cmd = "sudo timeout 5s strace -e trace=all -f -s 0 -yy -ttt -o " + strace_log + " -p " + std::to_string(target_pid);
-    int ret = system(strace_cmd.c_str());
+    
+    for (int iteration = 1; iteration <= max_iterations; iteration++)
+    {
+        int ret = system(strace_cmd.c_str());
 
-    // Build python command
-    std::string python_cmd = "python3 " + python_script + " -s " + strace_log + " -j " + json_file;
-    ret = system(python_cmd.c_str());
-    if (ret != 0) {
-        std::cerr << "Python script failed to process strace log." << std::endl;
-        return;
+        // Build python command
+        std::string python_cmd = "python3 " + python_script + " -s " + strace_log + " -j " + json_file;
+        ret = system(python_cmd.c_str());
+        if (ret != 0) {
+            std::cerr << "Python script failed to process strace log." << std::endl;
+            return;
+        }
+
+        std::cout << "Python script finished. Results updated in " << json_file << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(wait_seconds));
     }
-
-    std::cout << "Python script finished. Results updated in " << json_file << std::endl;
 }
 
 static void ensure_log_path_exists(const std::string& log_path)

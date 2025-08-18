@@ -42,7 +42,16 @@ def extruct_data_from_json(json_file: str, pid: int) -> SyscallData:
                        signals_data=signals)
 
 
-def analyze_data(syscall_data: SyscallData, training_data_file: str):
+def analyze_data(syscall_data: SyscallData, training_data_file: str) -> int:
+    """Analyze syscall and signal data to predict process status.
+
+    Args:
+        syscall_data (SyscallData): Extracted syscall and signal data.
+        training_data_file (str): Path to the training data file.
+
+    Returns:
+        int: Return value indicating process status (0 for normal, -1 for suspicious).
+    """
     # --- Load training data (labeled) ---
     training_df = pd.read_json(training_data_file)
 
@@ -80,6 +89,9 @@ def analyze_data(syscall_data: SyscallData, training_data_file: str):
 
     print(f"PID: {syscall_data.pid}")
     print(f"Process status: {prediction}")
+    retval = 0 if prediction == "normal" else 1
+    return retval
+    
 
 
 if __name__ == "__main__":
@@ -91,8 +103,9 @@ if __name__ == "__main__":
 
 
     extruct_data = extruct_data_from_json(args.json_file, args.process_id)
-    analyze_data(extruct_data, args.data)
-    # print(extruct_data)
+    val = analyze_data(extruct_data, args.data)
+    exit(val)
+    
 
     
 

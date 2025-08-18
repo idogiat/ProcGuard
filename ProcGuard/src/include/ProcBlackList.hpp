@@ -25,18 +25,59 @@ private:
     managed_shared_memory shm_;
     PidHashMap* pid_map_;
 
+    /*     * @brief: Initialize shared memory and map.
+     * @retval: 0 on success, -1 on failure
+     * @note: This function should be called only once at the start of the program.
+     */
+    void initSharedMemoryAndMap();
+
+    /*
+     * @brief: Clean up shared memory and map.
+     * @note: This function should be called at the end of the program.
+     */
+    void cleanupSharedMemoryAndMap();
+
+    ProcBlackList(const ProcBlackList&) = delete;
+    ProcBlackList& operator=(const ProcBlackList&) = delete;
+
+protected:
+    /*
+     * @brief: Constructor to initialize shared memory and map.
+     * @note: This function should be called only once at the start of the program.
+     */
     void initSharedMemory();
+
+    /*
+     * @brief: Constructor to initialize shared memory and map.
+     * @note: This function should be called only once at the start of the program.
+     */
     ProcBlackList();
     ~ProcBlackList();
 
 public:
+    /* 
+     * @brief: Get the singleton instance of ProcBlackList.
+     * @return Reference to the singleton instance.
+     */
     static ProcBlackList& getInstance(void);
 
     /*
-    * @brief: Add new process id to shared memory.
-    * @retval: id index in memory else 0
-    */
+     * @brief: Add new process id to shared memory.
+     * @retval: id index in memory else 0
+     */
     int addPid(uint16_t pid);
+
+    /* 
+     * @brief: Remove process id from shared memory.
+     * @param pid The PID of the process to remove.
+     * @retval: 0 on success, -1 on failure
+     */
     int removePid(uint16_t pid);
+
+    /*
+     * @brief: Check if a process id exists in shared memory.
+     * @param pid The PID of the process to check.
+     * @retval: true if exists, false otherwise
+     */
     bool isExists(uint16_t pid);
 };

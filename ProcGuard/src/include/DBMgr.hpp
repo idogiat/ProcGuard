@@ -29,6 +29,11 @@ private:
     std::vector<std::string> executeQuery(const std::string& query);
     std::vector<std::tuple<int, float>> getField(const std::string &db_name, const std::string &field, int limit);
 public:
+    /* 
+     * @brief: Constructor to initialize DBMgr with database path.
+     * @param db_path The path to the database file.
+     * @note: This function should be called only once at the start of the program.
+     */
     DBMgr(const std::string& db_path);
     ~DBMgr();
 

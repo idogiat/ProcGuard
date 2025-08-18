@@ -11,6 +11,10 @@ struct Msg_t {
     
     /*
     * get log file path
+    * This function generates a unique log file path based on the PID.
+    * The log file will be stored in /tmp/procguard_log/ with the filename format pid_<PID>.log
+    * @return: The path to the log file.
+    * @note: This function assumes that the directory /tmp/procguard_log/ exists.
     */
     std::string get_log_file_path() const
     {
@@ -19,12 +23,20 @@ struct Msg_t {
 
     /*
     * get json file path (to save syscalls and signals)
+    * This function generates a unique JSON file path based on the PID.
+    * The JSON file will be stored in /tmp/procguard_json/ with the filename format pid_<PID>.json
+    * @return: The path to the JSON file.
+    * @note: This function assumes that the directory /tmp/procguard_json/ exists.
     */
     std::string get_json_file_path() const
     {
         return "/tmp/procguard_json/pid_" + std::to_string(pid) + ".json";
     }
 
+    /* 
+     * @brief: Get the path to the Python script for analyzing strace output.
+     * @return: The path to the Python script.
+     */
     void delete_tmp_files() const
     {
         std::string log_file = get_log_file_path();
@@ -48,19 +60,24 @@ public:
     MsgQueue();
     ~MsgQueue();
 
+    /* create message queue
+     * return -1 if failed
+     */
+    int create();
+
     /* send msg to queue
-     * return -1 if field
-    */
+     * return -1 if failed
+     */
     int send(const Msg_t& msg);
     
     /* recieve msg from queue
      * return -1 if field
-    */
+     */
     ssize_t receive(Msg_t& out_msg_t);
 
     /* remove queue from memory (optional)
-    * return -1 if field
-    */
+     * return -1 if field
+     */
     int remove();
 
 private:

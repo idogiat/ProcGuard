@@ -13,6 +13,7 @@
 static bool running = true;
 static MsgQueue *mq;
 
+
 static void handle_signal(int signum)
 {
     (void)signum;

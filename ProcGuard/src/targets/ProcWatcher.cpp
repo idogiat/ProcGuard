@@ -75,16 +75,16 @@ int main()
                 switch (ret)
                 {
                 case 0:
-                    std::cerr << "The process id " << msg.pid << " is ok" << std::endl;
+                    std::cout << "The process id " << msg.pid << " is ok" << std::endl;
                     shm.setStatus(msg.pid, ProcStatus::OK);
                     break;
                 
                 case 1:
-                    std::cerr << "The process id " << msg.pid << " is suspicious" << std::endl;
+                    std::cout << "The process id " << msg.pid << " is suspicious" << std::endl;
                     shm.setStatus(msg.pid, ProcStatus::SUSPICIOUS);
                     break;
                 case -1:
-                    std::cerr << "The process id " << msg.pid << " is not ok" << std::endl;
+                    std::cout << "The process id " << msg.pid << " is not ok" << std::endl;
                     shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
                     break;
                 default:

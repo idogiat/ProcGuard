@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from typing import NamedTuple, List
@@ -104,7 +105,7 @@ if __name__ == "__main__":
 
     extruct_data = extruct_data_from_json(args.json_file, args.process_id)
     val = analyze_data(extruct_data, args.data)
-    exit(val)
+    sys.exit(val)
     
 
     

@@ -80,8 +80,9 @@ ProcStatus ProcStatusMgr::getStatus(pid_t pid)
     return status;
 }
 
-void ProcStatusMgr::removeStatus(pid_t pid)
+int ProcStatusMgr::removePid(pid_t pid)
 {
+    int status = -1;
     pthread_mutex_lock(&shm_ptr_->lock);
     for (size_t i = 0; i < shm_ptr_->p_count; ++i)
     {
@@ -92,11 +93,13 @@ void ProcStatusMgr::removeStatus(pid_t pid)
             shm_ptr_->entries[i].active = shm_ptr_->entries[shm_ptr_->p_count].active;
             shm_ptr_->entries[shm_ptr_->p_count].active = false;
             shm_ptr_->p_count--;
+            status = 0;
             break;
         }
     }
     
     pthread_mutex_unlock(&shm_ptr_->lock);
+    return status;
 }
 
 // Private functions
@@ -120,14 +123,15 @@ ProcStatusMgr::~ProcStatusMgr()
     if (!shm_ptr_)
         return;
 
-    pthread_mutex_lock(&shm_ptr_->lock);
-    int count = --(shm_ptr_->ref_count);
-    pthread_mutex_unlock(&shm_ptr_->lock);
-
+    shm_ptr_->ref_count.fetch_sub(1);
     munmap(shm_ptr_, sizeof(ProcStatusShm));
     close(shm_fd_);
 
-    if (count == 0) {
+    int count = shm_ptr_->ref_count.load();
+    std::cout << "~ProcStatusMgr up shared memory counter: " << count << std::endl;
+    if (count == 0)
+    {
+        std::cout << "Cleaning up shared memory: " << shm_name_ << std::endl;
         shm_unlink(shm_name_.c_str());
     }
 }
@@ -146,20 +150,29 @@ void ProcStatusMgr::initSharedMemory()
         {
             throw std::runtime_error("Failed to set shared memory size");
         }
+
         created_ = true;
+        std::cout << "Shared memory initialized: " << shm_name_ << std::endl;
+    }
+    else
+    {
+        std::cout << "Shared memory already exists: " << shm_name_ << std::endl;
     }
 
     void* ptr = mmap(nullptr, sizeof(ProcStatusShm), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_, 0);
-    if (ptr == MAP_FAILED) {
+    if (ptr == MAP_FAILED)
+    {
         close(shm_fd_);
         throw std::runtime_error("Failed to mmap shared memory");
     }
 
     shm_ptr_ = static_cast<ProcStatusShm*>(ptr);
 
-    if (created_) {
+    if (created_)
+    {
         std::memset(shm_ptr_, 0, sizeof(ProcStatusShm));
     }
+
 }
 
 void ProcStatusMgr::initMutex()

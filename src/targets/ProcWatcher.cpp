@@ -11,9 +11,9 @@
 #include <filesystem>
 
 
-#define PARSER_SCRIPT   "strace_parser.py"
-#define ANALYZER_SCRIPT "proc_analyzer.py"
-#define DATA_FILE       "data.json"
+#define PARSER_SCRIPT   "tools/strace_parser.py"
+#define ANALYZER_SCRIPT "tools/proc_analyzer.py"
+#define DATA_FILE       "ml_data/data.json"
 
 
 static int watch_process_with_strace(pid_t target_pid,

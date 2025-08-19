@@ -92,7 +92,6 @@ def analyze_data(syscall_data: SyscallData, training_data_file: str) -> int:
     print(f"Process status: {prediction}")
     retval = 0 if prediction == "normal" else 1
     return retval
-    
 
 
 if __name__ == "__main__":
@@ -102,12 +101,6 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--process_id", type=int, required=True, help="process ID to filter")
     args = parser.parse_args()
 
-
     extruct_data = extruct_data_from_json(args.json_file, args.process_id)
     val = analyze_data(extruct_data, args.data)
     sys.exit(val)
-    
-
-    
-
-    

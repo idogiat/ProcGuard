@@ -39,3 +39,8 @@
 
 # debug information files
 *.dwo
+job*
+VENV/
+.vscode/
+build/
+*.log

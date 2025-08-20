@@ -14,6 +14,7 @@
 #define PARSER_SCRIPT   "tools/strace_parser.py"
 #define ANALYZER_SCRIPT "tools/proc_analyzer.py"
 #define DATA_FILE       "ml_data/data.json"
+#define PYTHON_PATH     "VENV/bin/python3"
 
 
 static int watch_process_with_strace(pid_t target_pid,
@@ -84,7 +85,7 @@ int main()
                     shm.setStatus(msg.pid, ProcStatus::SUSPICIOUS);
                     break;
                 case -1:
-                    std::cout << "The process id " << msg.pid << " is not ok" << std::endl;
+                    std::cout << "The process id " << msg.pid << " Analyze error" << std::endl;
                     shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
                     break;
                 default:
@@ -122,22 +123,23 @@ static int watch_process_with_strace(pid_t target_pid,
                                       const std::string& strace_log,
                                       const std::string& json_file)
 {
+    int ret;
     std::cout << "Starting strace on PID " << target_pid << std::endl;
 
     // Build commands
     std::string strace_cmd = "sudo timeout 5s strace -e trace=all -f -s 0 -yy -ttt -o " + strace_log +
                              " -p " + std::to_string(target_pid);
-    std::string parser_cmd = "python3 " + parser_script + 
+    std::string parser_cmd = std::string(PYTHON_PATH) + " " + parser_script + 
                                 " -s " + strace_log +
                                 " -j " + json_file;
-    std::string analyzer_cmd = "python3 " + std::string(ANALYZER_SCRIPT) +
+    std::string analyzer_cmd = std::string(PYTHON_PATH) + " " + std::string(ANALYZER_SCRIPT) +
                                 " -j " + json_file +
                                 " -d " +  std::string(DATA_FILE) +
                                 " -p " + std::to_string(target_pid);
     
     for (int iteration = 1; iteration <= max_iterations; iteration++)
     {
-        int ret = system(strace_cmd.c_str());
+        ret = system(strace_cmd.c_str());
 
         // Build python command
         ret = system(parser_cmd.c_str());
@@ -150,8 +152,10 @@ static int watch_process_with_strace(pid_t target_pid,
         std::this_thread::sleep_for(std::chrono::seconds(wait_seconds));
     }
 
-    int ret = system(analyzer_cmd.c_str());
-    return ret;
+    ret = system(analyzer_cmd.c_str());
+
+    int exit_code = WEXITSTATUS(ret);
+    return exit_code;
 }
 
 static void ensure_log_path_exists(const std::string& log_path)

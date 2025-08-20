@@ -1,6 +1,6 @@
-import subprocess
 import os
 import signal
+import subprocess
 
 processes = {}
 
@@ -9,7 +9,7 @@ VENV_PATH = "./VENV/bin/python3"
 
 
 def start_process(name, command, shell=False):
-    ""
+    """Start a process and redirect its output to a log file."""
     stdout = open(f"{LOG_FOLDER}/{name}.log", "w")
     stderr = subprocess.STDOUT
 
@@ -19,6 +19,7 @@ def start_process(name, command, shell=False):
 
 
 def stop_process(name):
+    """Stop a process by name."""
     proc = processes.get(name)
     if not proc:
         return

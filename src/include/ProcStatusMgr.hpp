@@ -4,6 +4,7 @@
 #include <string>
 #include <pthread.h>
 #include <atomic>
+#include <vector>
 
 
 struct PidEntry
@@ -90,6 +91,13 @@ public:
      */
     ProcStatus getStatus(pid_t pid);
     
+    /*
+     * @brief: Get all process IDs in shared memory.
+     * @return A vector of PidEntry containing all process IDs and their statuses.
+     * @note: This function should be called to get the list of all monitored processes.
+     */
+    std::vector<PidEntry> getAllPIDs(void);
+
     /* 
      * @brief: Check if a process exists in shared memory.
      * @param pid The PID of the process.

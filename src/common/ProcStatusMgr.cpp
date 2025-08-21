@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 
 ProcStatusMgr& ProcStatusMgr::getInstance(void)
@@ -173,6 +174,21 @@ void ProcStatusMgr::initSharedMemory()
         std::memset(shm_ptr_, 0, sizeof(ProcStatusShm));
     }
 
+}
+
+std::vector<PidEntry> ProcStatusMgr::getAllPIDs(void)
+{
+    std::vector<PidEntry> pids;
+    pthread_mutex_lock(&shm_ptr_->lock);
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].active)
+        {
+            pids.push_back(shm_ptr_->entries[i]);
+        }
+    }
+    pthread_mutex_unlock(&shm_ptr_->lock);
+    return pids;
 }
 
 void ProcStatusMgr::initMutex()

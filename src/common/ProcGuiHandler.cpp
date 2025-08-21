@@ -1,6 +1,7 @@
 #include "ProcGuiHandler.hpp"
 #include "ProcStatusMgr.hpp"
 
+#include <QVBoxLayout>
 #include <QHeaderView>
 #include <QTimer>
 #include <vector>
@@ -13,6 +14,11 @@ ProcGuiHandler::ProcGuiHandler(QWidget* parent) : QWidget(parent)
     QStringList headers = {"PID", "Status", "Extra Info"};
     table->setHorizontalHeaderLabels(headers);
     table->horizontalHeader()->setStretchLastSection(true);
+
+    // Layout to make table resize with window
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(table);
+    setLayout(layout);
 
     // Timer to refresh every 2 seconds
     QTimer* timer = new QTimer(this);

@@ -45,15 +45,14 @@ pip install pandas scikit-learn
 
 2. Compile C++ Core:
 ```
-mkdir build && cd build
-cmake ..
-make
+cmake -B build -S .
+make -C build
 ```
 
 3. Run ProcGuard:
 ```
 source VENV/bin/activate
-sudo ./build/ProcGuard
+sudo -E python3 run.py --clean
 ```
 
 Note: strace requires root privileges. Running ProcGuard with sudo ensures proper tracing of monitored processes.

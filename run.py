@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
 
     os.makedirs(LOG_FOLDER, exist_ok=True)
-    start_process("proc_scanner", ["source ./VENV/bin/activate & python3 proc_scanner.py"], shell=True)
+    start_process("proc_scanner", ["source ./VENV/bin/activate & python3 proc_scanner/proc_scanner.py"], shell=True)
     start_process("ProcWatcher", ["source ./VENV/bin/activate & ./build/ProcWatcher"], shell=True)
     start_process("ProcMonitor", ["./build/ProcMonitor"])
     start_process("ProcMonitor", ["./build/ProcGui"])

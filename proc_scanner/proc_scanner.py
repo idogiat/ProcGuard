@@ -1,4 +1,4 @@
-from DBMgr import DBMgrProc
+from DBMgr import DBMgrPS
 from time import sleep
 
 
@@ -6,7 +6,7 @@ if __name__ == "__main__":
     count = 1
 
     while(True):
-        with DBMgrProc() as db:
+        with DBMgrPS() as db:
             db.snapshot()
             db.delete_old_snapshots()
             print(f"Snapshot {count} taken.")

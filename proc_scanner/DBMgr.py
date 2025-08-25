@@ -1,8 +1,8 @@
 import sqlite3
 import subprocess
-import time
 from datetime import datetime
 from abc import ABC, abstractmethod
+from typing import NamedTuple
 
 
 DB_PATH = "ps_snapshot.db"
@@ -49,7 +49,21 @@ class DBMgr(ABC):
         self.close()
 
 
-class DBMgrProc(DBMgr):
+class PSLine(NamedTuple):
+    timestamp: str
+    pid: int
+    ppid: int
+    comm: str
+    etime: str
+    cpu: float
+    mem: float
+    rss: int
+    vsz: int
+    stat: str
+    flags: str
+
+
+class DBMgrPS(DBMgr):
     PS_CMD = ["ps", "-eo", "pid,ppid,comm,etime,%cpu,%mem,rss,vsz,stat,flags ", "--sort=-%mem"]
     MAX_LINES = 2000
     PARTS_COUNT = 10
@@ -84,13 +98,14 @@ class DBMgrProc(DBMgr):
         for line in lines:
             parts = line.split(None, self.PARTS_COUNT)
 
-            if len(parts) == self.PARTS_COUNT:
-                pid, ppid, comm, etime, cpu, mem, rss, vsz, stat, flags = parts
+            if len(parts) == self.PARTS_COUNT :
+                parts.insert(0, timestamp)  # Insert timestamp at the beginning
+                psline = PSLine(*parts)
                 self.cursor.execute('''
                 INSERT INTO snapshots (
                     timestamp, pid, ppid, comm, etime, cpu, mem, rss, vsz, stat, flags
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (timestamp, pid, ppid, comm, etime, cpu, mem, rss, vsz, stat, flags))
+                ''', psline)
 
         self.conn.commit()
 

@@ -2,7 +2,9 @@ import sqlite3
 import subprocess
 from datetime import datetime
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import List, NamedTuple, Optional
+from functools import partialmethod
+from copy import copy
 
 
 DB_PATH = "ps_snapshot.db"
@@ -64,8 +66,8 @@ class PSLine(NamedTuple):
 
 
 class DBMgrPS(DBMgr):
-    PS_CMD = ["ps", "-eo", "pid,ppid,comm,etime,%cpu,%mem,rss,vsz,stat,flags ", "--sort=-%mem"]
-    MAX_LINES = 2000
+    PS_CMD = ["ps", "-eo", "pid,ppid,comm,etime,%cpu,%mem,rss,vsz,stat,flags"]
+    MAX_LINES = 4000
     PARTS_COUNT = 10
     def __init__(self, db_path=DB_PATH) -> None:
         super().__init__(db_path)
@@ -89,10 +91,40 @@ class DBMgrPS(DBMgr):
         ''')
         self.conn.commit()
     
-    def snapshot(self) -> None:
-        result = subprocess.run(self.PS_CMD, stdout=subprocess.PIPE, text=True)
-        lines = result.stdout.strip().split('\n')[1:]
+    def _get_ps_cmd_output(self, filter_by: str, max_results: Optional[int] = None) -> List[str]:
+        """
+        Execute a command and return its output as a list of strings.
+        
+        :param filter_by: String to filter the output lines.
+        :param max_results: Maximum number of results to return. If None, return all results.
+        :return: List of output lines containing the filter string.
+        """
+        cmd = copy(self.PS_CMD)
+        cmd.append(f"--sort=-{filter_by}")
 
+        if max_results:
+            cmd.append(f"| head -n {max_results}")
+        
+
+        result = subprocess.run(" ".join(cmd), shell=True, text=True, capture_output=True)
+        lines = result.stdout.splitlines()
+        return lines[1:]
+    
+    get_ps_max_by_cpu = partialmethod(_get_ps_cmd_output, filter_by="%cpu", max_results=20)
+    get_ps_max_by_mem = partialmethod(_get_ps_cmd_output, filter_by="%mem", max_results=20)
+    get_ps_max_by_rss = partialmethod(_get_ps_cmd_output, filter_by="rss", max_results=20)
+    get_ps_max_by_vsz = partialmethod(_get_ps_cmd_output, filter_by="vsz", max_results=20)
+
+    def snapshot(self) -> None:
+        """
+        Take a snapshot of the current processes and store them in the database.
+        This method retrieves the top processes by CPU, memory, and RSS usage,
+        combines the results, and inserts them into the snapshots table with a timestamp.
+        """
+        lines = self.get_ps_max_by_cpu()
+        lines += self.get_ps_max_by_mem()
+        lines += self.get_ps_max_by_rss()
+    
         timestamp = datetime.now().strftime("%d-%m %H:%M")
 
         for line in lines:
@@ -101,6 +133,7 @@ class DBMgrPS(DBMgr):
             if len(parts) == self.PARTS_COUNT :
                 parts.insert(0, timestamp)  # Insert timestamp at the beginning
                 psline = PSLine(*parts)
+                print(psline)
                 self.cursor.execute('''
                 INSERT INTO snapshots (
                     timestamp, pid, ppid, comm, etime, cpu, mem, rss, vsz, stat, flags

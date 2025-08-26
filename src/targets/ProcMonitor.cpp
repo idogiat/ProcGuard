@@ -8,7 +8,9 @@
 #include <iostream>
 #include <signal.h>
 
-#define MAX_THREADS 5
+#define MAX_PS  8
+
+static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl);
 
 static bool running = true;
 static MsgQueue *mq;
@@ -31,8 +33,22 @@ int main()
 
     while (running)
     {
-        auto result1 = db->getMaxCPU(DB_NAME, MAX_THREADS);
-        for (auto r : result1)
+        send_msg(db->getMaxCPU(DB_NAME, MAX_PS), ps_mgr, ps_bl);
+        send_msg(db->getMaxMEM(DB_NAME, MAX_PS), ps_mgr, ps_bl);
+        send_msg(db->getMaxRSS(DB_NAME, MAX_PS), ps_mgr, ps_bl);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+    
+    mq->remove();
+    delete db;
+    delete mq;
+    return 0;
+}
+
+
+static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl)
+{
+    for (auto r : result)
         {
             int pid = std::get<0>(r);
             if (!ps_bl.isExists(pid))
@@ -41,30 +57,8 @@ int main()
                 {
                     Msg_t m = {pid, ProcType::CPU};
                     mq->send(m);
-                    std::cout << "ID: " << pid  << " CPU: " << std::get<1>(r) << std::endl;
+                    std::cout << "ID: " << pid << std::endl;
                 }
             }
         }
-        auto result2 = db->getMaxMEM(DB_NAME, MAX_THREADS);
-        for (auto r : result2)
-        {
-            int pid = std::get<0>(r);
-            if (!ps_bl.isExists(pid))
-            {
-                // Check if the process is already being monitored
-                if(ps_mgr.addPid(pid) != -1)
-                {
-                    Msg_t m = {pid, ProcType::MEMORY};
-                    mq->send(m);
-                    std::cout << "ID: " << pid << " MEM: " << std::get<1>(r) << std::endl;
-                }
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-    }
-    
-    mq->remove();
-    delete db;
-    delete mq;
-    return 0;
 }

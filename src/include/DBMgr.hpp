@@ -15,8 +15,9 @@
 #define F_comm   "comm"
 #define F_CPU    "cpu"
 #define F_MEMORY "mem"
+#define F_RSS    "rss"
 #define F_stat   "stat"
-#define F_flags   "flags"
+#define F_flags  "flags"
 
 
 class DBMgr
@@ -39,5 +40,6 @@ public:
 
     std::vector<std::tuple<int, float>> getMaxCPU(const std::string &db_name, int limit = -1);
     std::vector<std::tuple<int, float>> getMaxMEM(const std::string &db_name, int limit = -1);
+    std::vector<std::tuple<int, float>> getMaxRSS(const std::string &db_name, int limit = -1);
 
 };

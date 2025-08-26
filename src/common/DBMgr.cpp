@@ -105,3 +105,8 @@ std::vector<std::tuple<int, float>> DBMgr::getMaxMEM(const std::string &db_name,
     return getField(db_name, F_MEMORY, limit);
 
 }
+
+std::vector<std::tuple<int, float>> DBMgr::getMaxRSS(const std::string &db_name, int limit)
+{
+    return getField(db_name, F_RSS, limit);
+}

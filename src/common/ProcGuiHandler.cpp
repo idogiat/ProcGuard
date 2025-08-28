@@ -43,7 +43,8 @@ void ProcGuiHandler::refreshTable()
     table->setRowCount(pids.size());
 
     int row = 0;
-    for (auto pid : pids) {
+    for (auto pid : pids)
+    {
         table->setItem(row, 0, new QTableWidgetItem(QString::number(pid.pid)));
         table->setItem(row, 1, new QTableWidgetItem(ProcStatusToString(pid.status)));
         table->setItem(row, 2, new QTableWidgetItem(getProcessName(pid.pid).c_str()));

@@ -63,60 +63,94 @@ int countChildren(pid_t pid)
 }
 
 
-std::string getProcessMoreInfo(pid_t pid)
-{
+std::string getProcessMoreInfo(pid_t pid) {
     std::ostringstream out;
 
-    double cpu_user_sec = 0, cpu_sys_sec = 0;
-    long memory_kb = 0;
-    long voluntary_ctxt = 0, nonvoluntary_ctxt = 0;
+    // --- State, utime, stime, threads ---
+    std::string state = "?";
+    long utime = 0, stime = 0;
+    int threads = 0;
 
-    // --- CPU ---
-    {
-        std::string path = "/proc/" + std::to_string(pid) + "/stat";
-        std::ifstream file(path);
-        if (file.is_open())
-        {
-            std::string tmp;
-            long utime, stime;
-            for (int i = 1; i <= 13; i++) file >> tmp; // skip to 14th field
-            file >> utime >> stime;
-            long ticks_per_sec = sysconf(_SC_CLK_TCK);
-            cpu_user_sec = (double)utime / ticks_per_sec;
-            cpu_sys_sec  = (double)stime / ticks_per_sec;
-        }
+    std::ifstream statFile("/proc/" + std::to_string(pid) + "/stat");
+    if (statFile.is_open()) {
+        std::string tmp, comm;
+        char cstate;
+        int ppid;
+        for (int i = 0; i < 2; ++i) statFile >> tmp; // skip pid + comm
+        statFile >> cstate;
+        state = cstate;
+        // skip to fields 14 and 15 (utime, stime)
+        for (int i = 4; i <= 13; ++i) statFile >> tmp;
+        statFile >> utime >> stime;
+        // field 20 - number of threads
+        for (int i = 16; i < 20; ++i) statFile >> tmp;
+        statFile >> threads;
     }
 
-    // --- Memory & Context Switches ---
-    {
-        std::string path = "/proc/" + std::to_string(pid) + "/status";
-        std::ifstream file(path);
+    // --- Memory ---
+    long mem_kb = 0;
+    std::ifstream statusFile("/proc/" + std::to_string(pid) + "/status");
+    if (statusFile.is_open()) {
         std::string key;
-        while (file >> key)
-        {
-            if (key == "VmRSS:")
-            {
-                file >> memory_kb;
-            }
-            else if (key == "voluntary_ctxt_switches:")
-            {
-                file >> voluntary_ctxt;
-            }
-            else if (key == "nonvoluntary_ctxt_switches:")
-            {
-                file >> nonvoluntary_ctxt;
-            }
-            else
-            {
+        while (statusFile >> key) {
+            if (key == "VmRSS:") {
+                statusFile >> mem_kb;
+                break;
+            } else {
                 std::string dummy;
-                std::getline(file, dummy); // skip the rest of the line
+                std::getline(statusFile, dummy);
             }
         }
     }
 
-    out << "CPU User (" << cpu_user_sec << " sec), Sys (" << cpu_sys_sec << " sec)\n";
-    out << "Mem Usage: " << memory_kb << " KB\n";
-    out << "context Switch: " << voluntary_ctxt << " voluntary, " << nonvoluntary_ctxt << " non-voluntary";
+    // --- Total RAM ---
+    long mem_total_kb = 1; // default to prevent division by zero
+    std::ifstream meminfo("/proc/meminfo");
+    if (meminfo.is_open()) {
+        std::string line;
+        while (std::getline(meminfo, line)) {
+            if (line.find("MemTotal:") != std::string::npos) {
+                std::istringstream iss(line);
+                std::string tmp;
+                iss >> tmp >> mem_total_kb;
+                break;
+            }
+        }
+    }
+
+    double mem_percent = (double)mem_kb / mem_total_kb * 100.0;
+
+    // --- CPU usage approximation ---
+    long ticks_per_sec = sysconf(_SC_CLK_TCK);
+    double cpu_user_sec = (double)utime / ticks_per_sec;
+    double cpu_sys_sec  = (double)stime / ticks_per_sec;
+
+    // --- Command / Name ---
+    std::string cmd;
+    std::ifstream cmdFile("/proc/" + std::to_string(pid) + "/cmdline");
+    if (cmdFile.is_open()) {
+        std::getline(cmdFile, cmd, '\0'); // read until null terminator
+    }
+
+    // --- Map state character to string ---
+    std::string stateStr;
+    switch (state[0]) {
+        case 'R': stateStr = "Running"; break;
+        case 'S': stateStr = "Sleeping"; break;
+        case 'D': stateStr = "Disk Sleep"; break;
+        case 'Z': stateStr = "Zombie"; break;
+        case 'T': stateStr = "Stopped"; break;
+        case 't': stateStr = "Tracing Stop"; break;
+        case 'X': stateStr = "Dead"; break;
+        default:  stateStr = "Unknown"; break;
+    }
+
+    // --- Build output string ---
+    out << "State: " << stateStr << "\n";
+    out << "CPU: " << cpu_user_sec + cpu_sys_sec << " sec\n";
+    out << "Memory: " << (mem_kb / 1024.0) << " MB (" << mem_percent << "%)\n";
+    out << "Threads: " << threads << "\n";
+    out << "Command: " << cmd << "\n";
 
     return out.str();
 }

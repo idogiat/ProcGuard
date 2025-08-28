@@ -19,6 +19,7 @@ set(COMMON_SRCS
     src/common/DBMgr.cpp
     src/common/MsgQueue.cpp
     src/common/ProcBlackList.cpp
+    src/common/ProcUtils.cpp
     )
     
     # -------------------

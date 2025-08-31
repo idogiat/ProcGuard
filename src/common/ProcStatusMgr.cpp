@@ -16,7 +16,7 @@ ProcStatusMgr& ProcStatusMgr::getInstance(void)
     return instance;
 }
 
-int ProcStatusMgr::addPid(pid_t pid)
+int ProcStatusMgr::addPid(pid_t pid, ProcType detect_type)
 {
     int index = -1;
     pthread_mutex_lock(&shm_ptr_->lock);
@@ -34,6 +34,7 @@ int ProcStatusMgr::addPid(pid_t pid)
         index = shm_ptr_->p_count;
         shm_ptr_->entries[index].pid = pid;
         shm_ptr_->entries[index].status = ProcStatus::WAITING;
+        shm_ptr_->entries[index].detect_type = detect_type;
         shm_ptr_->entries[index].active = true;
         shm_ptr_->p_count++;
     }
@@ -79,6 +80,23 @@ ProcStatus ProcStatusMgr::getStatus(pid_t pid)
     
     pthread_mutex_unlock(&shm_ptr_->lock);
     return status;
+}
+
+ProcType ProcStatusMgr::getDetectedType(pid_t pid)
+{
+    ProcType type = ProcType::OTHER;
+    pthread_mutex_lock(&shm_ptr_->lock);
+    for (size_t i = 0; i < shm_ptr_->p_count; ++i)
+    {
+        if (shm_ptr_->entries[i].pid == pid)
+        {
+            type = shm_ptr_->entries[i].detect_type;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&shm_ptr_->lock);
+    return type;
 }
 
 int ProcStatusMgr::removePid(pid_t pid)

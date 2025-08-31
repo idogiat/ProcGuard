@@ -12,6 +12,8 @@ enum class ProcStatus : uint8_t
     NOT_EXISTS = 0xFF,
 };
 
+
+
 inline const char* ProcStatusToString(ProcStatus status) {
     switch (status) {
         case ProcStatus::OK: return "OK";
@@ -24,6 +26,13 @@ inline const char* ProcStatusToString(ProcStatus status) {
 
 enum class ProcType : uint8_t
 {
-    CPU = 0,
-    MEMORY = 1,
+    MEMORY = 0,
+    CPU = 1,
+    DEADLOCK = 2,
+    RSS = 3,
+    // NETWORK = 4,
+    // FILES_IO = 5,
+    // SYSCALL = 6,
+    // SUB_PROCESSES = 6,
+    OTHER = 0xFF,
 };

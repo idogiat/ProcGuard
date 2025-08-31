@@ -10,7 +10,7 @@
 
 #define MAX_PS  8
 
-static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl);
+static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl, ProcType type);
 
 static bool running = true;
 static MsgQueue *mq;
@@ -33,9 +33,9 @@ int main()
 
     while (running)
     {
-        send_msg(db->getMaxCPU(DB_NAME, MAX_PS), ps_mgr, ps_bl);
-        send_msg(db->getMaxMEM(DB_NAME, MAX_PS), ps_mgr, ps_bl);
-        send_msg(db->getMaxRSS(DB_NAME, MAX_PS), ps_mgr, ps_bl);
+        send_msg(db->getMaxCPU(DB_NAME, MAX_PS), ps_mgr, ps_bl, ProcType::CPU);
+        send_msg(db->getMaxMEM(DB_NAME, MAX_PS), ps_mgr, ps_bl, ProcType::MEMORY);
+        send_msg(db->getMaxRSS(DB_NAME, MAX_PS), ps_mgr, ps_bl, ProcType::RSS);
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }
     
@@ -46,16 +46,16 @@ int main()
 }
 
 
-static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl)
+static void send_msg(const std::vector<std::tuple<int, float>> &result, ProcStatusMgr &ps_mgr, ProcBlackList &ps_bl, ProcType type)
 {
     for (auto r : result)
         {
             int pid = std::get<0>(r);
             if (!ps_bl.isExists(pid))
             {
-                if(ps_mgr.addPid(pid) != -1)
+                if(ps_mgr.addPid(pid, type) != -1)
                 {
-                    Msg_t m = {pid, ProcType::CPU};
+                    Msg_t m = {pid, type};
                     mq->send(m);
                     std::cout << "ID: " << pid << std::endl;
                 }

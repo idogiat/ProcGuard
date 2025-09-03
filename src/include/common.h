@@ -17,9 +17,11 @@ enum class ProcStatus : uint8_t
 inline const char* ProcStatusToString(ProcStatus status) {
     switch (status) {
         case ProcStatus::OK: return "OK";
+        case ProcStatus::WAITING: return "WAITING";
         case ProcStatus::CHECKING: return "CHECKING";
         case ProcStatus::SUSPICIOUS: return "SUSPICIOUS";
         case ProcStatus::ANALYZE_ERROR: return "ANALYZE_ERROR";
+        case ProcStatus::NOT_EXISTS: return "NOT_EXISTS";
         default: return "UNKNOWN";
     }
 }

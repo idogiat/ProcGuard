@@ -11,6 +11,7 @@ struct PidEntry
 {
     pid_t pid;
     ProcStatus status;
+    ProcType detect_type;
     bool active;
 };
 
@@ -29,7 +30,7 @@ class ProcStatusMgr
     
     int shm_fd_ = -1;
     ProcStatusShm* shm_ptr_ = nullptr;
-    const std::string shm_name_ = "/proc_guard_shm";
+    const std::string shm_name_ = "/proc_guard_status_mgr_shm";
     bool created_ = false;
     
     /* 
@@ -66,9 +67,12 @@ public:
 
     /*
      * @brief: Add new process id to shared memory.
+     * @param pid The PID of the process to add.
+     * @param detect_type The type of detection for the process.
      * @retval: id index in memory else 0
+     * 
      */
-    int addPid(pid_t pid);
+    int addPid(pid_t pid, ProcType detect_type);
 
     /*
      * @brief: Remove process id from shared memory.
@@ -83,6 +87,13 @@ public:
      * @note: This function should be called only when the process is being monitored.
      */
     void setStatus(pid_t pid, ProcStatus status);
+
+    /*
+     * @brief: Get the detection type of a process in shared memory.
+     * @param pid The PID of the process.
+     * @return The detection type of the process, or ProcType::OTHER if the process is not found.
+     */
+    ProcType getDetectedType(pid_t pid);
     
     /* 
      * @brief: Get the status of a process in shared memory.

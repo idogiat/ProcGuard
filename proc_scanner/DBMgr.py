@@ -91,16 +91,18 @@ class DBMgrPS(DBMgr):
         ''')
         self.conn.commit()
     
-    def _get_ps_cmd_output(self, filter_by: str, max_results: Optional[int] = None) -> List[str]:
+    def _get_ps_cmd_output(self, sort_by: Optional[str] = None, max_results: Optional[int] = None) -> List[str]:
         """
         Execute a command and return its output as a list of strings.
         
-        :param filter_by: String to filter the output lines.
+        :param sort_by: String to sort the output lines.
         :param max_results: Maximum number of results to return. If None, return all results.
         :return: List of output lines containing the filter string.
         """
         cmd = copy(self.PS_CMD)
-        cmd.append(f"--sort=-{filter_by}")
+
+        if sort_by:
+            cmd.append(f"--sort=-{sort_by}")
 
         if max_results:
             cmd.append(f"| head -n {max_results}")
@@ -110,10 +112,10 @@ class DBMgrPS(DBMgr):
         lines = result.stdout.splitlines()
         return lines[1:]
     
-    get_ps_max_by_cpu = partialmethod(_get_ps_cmd_output, filter_by="%cpu", max_results=20)
-    get_ps_max_by_mem = partialmethod(_get_ps_cmd_output, filter_by="%mem", max_results=20)
-    get_ps_max_by_rss = partialmethod(_get_ps_cmd_output, filter_by="rss", max_results=20)
-    get_ps_max_by_vsz = partialmethod(_get_ps_cmd_output, filter_by="vsz", max_results=20)
+    get_ps_max_by_cpu = partialmethod(_get_ps_cmd_output, sort_by="%cpu", max_results=20)
+    get_ps_max_by_mem = partialmethod(_get_ps_cmd_output, sort_by="%mem", max_results=20)
+    get_ps_max_by_rss = partialmethod(_get_ps_cmd_output, sort_by="rss", max_results=20)
+    get_ps_max_by_vsz = partialmethod(_get_ps_cmd_output, sort_by="vsz", max_results=20)
 
     def snapshot(self) -> None:
         """
@@ -121,9 +123,10 @@ class DBMgrPS(DBMgr):
         This method retrieves the top processes by CPU, memory, and RSS usage,
         combines the results, and inserts them into the snapshots table with a timestamp.
         """
-        lines = self.get_ps_max_by_cpu()
-        lines += self.get_ps_max_by_mem()
-        lines += self.get_ps_max_by_rss()
+        lines = self._get_ps_cmd_output()
+        # lines = self.get_ps_max_by_cpu()
+        # lines += self.get_ps_max_by_mem()
+        # lines += self.get_ps_max_by_rss()
     
         timestamp = datetime.now().strftime("%d-%m %H:%M")
 

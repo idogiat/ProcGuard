@@ -67,7 +67,7 @@ std::vector<std::tuple<int, float>> DBMgr::getField(const std::string &db_name, 
              << " FROM " << db_name
              << " ORDER BY " << field << " DESC";
 
-             if (limit > 0)
+    if (limit > 0)
     {
         ss_query << " LIMIT " << limit;
     }
@@ -109,4 +109,60 @@ std::vector<std::tuple<int, float>> DBMgr::getMaxMEM(const std::string &db_name,
 std::vector<std::tuple<int, float>> DBMgr::getMaxRSS(const std::string &db_name, int limit)
 {
     return getField(db_name, F_RSS, limit);
+}
+
+std::vector<std::tuple<int, int>> DBMgr::getDeadlockSuspicious(const std::string &db_name, int limit)
+{
+    std::vector<std::tuple<int, int>> results;
+    std::vector<std::string> query_results;
+    std::stringstream ss_query;
+    
+    // SQL query
+    ss_query << "SELECT pid, ppid, etime, vsz, stat "
+             << "FROM " << db_name << " "
+             << "WHERE cpu = 0.0 "
+             << "AND (stat LIKE 'D%' OR stat LIKE 'Z%' OR stat LIKE 'Sl%') "
+             << "ORDER BY etime DESC, vsz DESC ";
+
+    if (limit > 0)
+    {
+        ss_query << " LIMIT " << limit;
+    }
+    ss_query << ";" ;
+    
+    query_results = executeQuery(ss_query.str());
+    
+    for (auto &row : query_results)
+    {
+        std::vector<std::string> fields;
+        boost::split(fields, row, boost::is_any_of("|"));
+        for (auto &f : fields) boost::trim(f);
+
+        if (fields.size() < 5) continue;
+
+        int pid = std::stoi(fields[0]);
+        int ppid = std::stoi(fields[1]);
+        std::string etime_str = fields[2]; // format HH:MM or MM:SS
+        int vsz = std::stoi(fields[3]);
+        std::string stat = fields[4];
+
+        // convert etime to minutes
+        int minutes = 0;
+        {
+            std::vector<std::string> parts;
+            boost::split(parts, etime_str, boost::is_any_of(":"));
+            if (parts.size() == 2) // MM:SS
+                minutes = std::stoi(parts[0]);
+            else if (parts.size() == 3) // HH:MM:SS
+                minutes = std::stoi(parts[0]) * 60 + std::stoi(parts[1]);
+        }
+
+        // filter stuck processes
+        if ((vsz > 5000 || minutes >= 2) && (stat[0] == 'D' || stat[0] == 'Z' || stat.substr(0,2) == "Sl"))
+        {
+            results.push_back(std::tuple(pid, ppid));
+        }
+    }
+    
+    return results;
 }

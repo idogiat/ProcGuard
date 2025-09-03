@@ -53,58 +53,68 @@ int main()
     while (true)
     {
         Msg_t msg;
-        if (mq.receive(msg) != -1)
+        int rcv_status = mq.receive(msg);
+
+        try 
         {
-            std::cout << "Received message from PID: " << msg.pid
-                      << " Type: " << (int)msg.type << std::endl;
-            
-            shm.setStatus(msg.pid, ProcStatus::CHECKING);
-
-            pid_t pid = fork();
-            if (pid == -1)
+            if (rcv_status != -1)
             {
-                perror("fork failed");
-            }
-            else if (pid == 0)
-            {
-                ensure_log_path_exists(msg.get_log_file_path());
-                int ret = watch_process_with_strace(msg.pid,
-                                                    parser_script.string(),
-                                                    msg.get_log_file_path(),
-                                                    msg.get_json_file_path());
-
-                switch (ret)
-                {
-                case 0:
-                    std::cout << "The process id " << msg.pid << " is ok" << std::endl;
-                    shm.setStatus(msg.pid, ProcStatus::OK);
-                    break;
+                std::cout << "Received message from PID: " << msg.pid
+                          << " Type: " << (int)msg.type << std::endl;
                 
-                case 1:
-                    std::cout << "The process id " << msg.pid << " is suspicious" << std::endl;
-                    shm.setStatus(msg.pid, ProcStatus::SUSPICIOUS);
-                    break;
-                case -1:
-                    std::cout << "The process id " << msg.pid << " Analyze error" << std::endl;
-                    shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
-                    break;
-                default:
-                    break;
+                shm.setStatus(msg.pid, ProcStatus::CHECKING);
+    
+                pid_t pid = fork();
+                if (pid == -1)
+                {
+                    perror("fork failed");
                 }
-
-                // Clean up shared memory and blacklist
-                pid_t current_pid = getpid();
-                ps_bl.removePid(current_pid);
-                children.erase(std::remove(children.begin(), children.end(), current_pid), children.end());               
-                exit(0);
+                else if (pid == 0)
+                {
+                    ensure_log_path_exists(msg.get_log_file_path());
+                    int ret = watch_process_with_strace(msg.pid,
+                                                        parser_script.string(),
+                                                        msg.get_log_file_path(),
+                                                        msg.get_json_file_path());
+    
+                    switch (ret)
+                    {
+                    case 0:
+                        std::cout << "The process id " << msg.pid << " is ok" << std::endl;
+                        shm.setStatus(msg.pid, ProcStatus::OK);
+                        break;
+                    
+                    case 1:
+                        std::cout << "The process id " << msg.pid << " is suspicious" << std::endl;
+                        shm.setStatus(msg.pid, ProcStatus::SUSPICIOUS);
+                        break;
+                    case -1:
+                        std::cout << "The process id " << msg.pid << " Analyze error" << std::endl;
+                        shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
+                        break;
+                    default:
+                        break;
+                    }
+    
+                    // Clean up shared memory and blacklist
+                    pid_t current_pid = getpid();
+                    ps_bl.removePid(current_pid);
+                    children.erase(std::remove(children.begin(), children.end(), current_pid), children.end());               
+                    exit(0);
+                }
+                else
+                {
+                    // parent
+                    children.push_back(pid);
+                    ps_bl.addPid(pid);
+                    std::cout << "Started watcher process for PID " << msg.pid << " (watcher PID: " << pid << ")" << std::endl;
+                }
             }
-            else
-            {
-                // parent
-                children.push_back(pid);
-                ps_bl.addPid(pid);
-                std::cout << "Started watcher process for PID " << msg.pid << " (watcher PID: " << pid << ")" << std::endl;
-            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Exception: " << e.what() << std::endl;
+            shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
         }
     }
     

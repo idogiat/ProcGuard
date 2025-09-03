@@ -16,6 +16,9 @@
 #define DATA_FILE       "ml_data/data.json"
 #define PYTHON_PATH     "VENV/bin/python3"
 
+#define MAX_PROCESSES   15
+#define SLEEP           2 // seconds
+
 
 static int watch_process_with_strace(pid_t target_pid,
                                      const std::string& parser_script,
@@ -49,9 +52,26 @@ int main()
 
     std::cout << "MsgHandler started. Waiting for messages..." << std::endl;
 
-
     while (true)
     {
+        // Clean up finished child processes
+        int status;
+        pid_t finished;
+
+        while ((finished = waitpid(-1, &status, WNOHANG)) > 0)
+        {
+            children.erase(std::remove(children.begin(), children.end(), finished), children.end());
+            ps_bl.removePid(finished);
+            std::cout << "Watcher process " << finished << " finished and cleaned up." << std::endl;
+        }
+
+        if (children.size() == MAX_PROCESSES)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(SLEEP));
+            std::cout << "Max processes reached (" << children.size() << "). Waiting..." << std::endl;
+            continue;
+        }
+
         Msg_t msg;
         int rcv_status = mq.receive(msg);
 
@@ -114,7 +134,6 @@ int main()
         catch (const std::exception &e)
         {
             std::cerr << "Exception: " << e.what() << std::endl;
-            shm.setStatus(msg.pid, ProcStatus::ANALYZE_ERROR);
         }
     }
     
@@ -129,9 +148,9 @@ int main()
  * @return 0 on normal process, -1 on failure
 */
 static int watch_process_with_strace(pid_t target_pid,
-                                      const std::string& parser_script,
-                                      const std::string& strace_log,
-                                      const std::string& json_file)
+                                     const std::string& parser_script,
+                                     const std::string& strace_log,
+                                     const std::string& json_file)
 {
     int ret;
     std::cout << "Starting strace on PID " << target_pid << std::endl;

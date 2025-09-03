@@ -53,3 +53,14 @@ add_executable(ProcWatcher
 )
 
 target_link_libraries(ProcWatcher pthread rt sqlite3 stdc++fs)
+
+
+# -----------------------
+# CLI target: ProcCleaner
+# -----------------------
+add_executable(ProcCleaner
+    src/targets/ProcCleaner.cpp
+    ${COMMON_SRCS}
+)
+
+target_link_libraries(ProcCleaner pthread rt sqlite3 stdc++fs)

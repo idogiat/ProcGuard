@@ -107,11 +107,13 @@ int ProcStatusMgr::removePid(pid_t pid)
     {
         if (shm_ptr_->entries[i].pid == pid)
         {
-            shm_ptr_->entries[i].status = shm_ptr_->entries[shm_ptr_->p_count].status;
             shm_ptr_->entries[i].pid = shm_ptr_->entries[shm_ptr_->p_count].pid;
+            shm_ptr_->entries[i].status = shm_ptr_->entries[shm_ptr_->p_count].status;
+            shm_ptr_->entries[i].detect_type = shm_ptr_->entries[shm_ptr_->p_count].detect_type;
             shm_ptr_->entries[i].active = shm_ptr_->entries[shm_ptr_->p_count].active;
-            shm_ptr_->entries[shm_ptr_->p_count].active = false;
             shm_ptr_->p_count--;
+            shm_ptr_->entries[shm_ptr_->p_count].pid = 0; 
+            shm_ptr_->entries[shm_ptr_->p_count].active = false;
             status = 0;
             break;
         }

@@ -11,7 +11,8 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 # Include directories
-include_directories(${CMAKE_SOURCE_DIR}/src/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/include
+                    ${CMAKE_SOURCE_DIR}/src/include/ProcWatcherHandlers)
 
 # Common sources
 set(COMMON_SRCS

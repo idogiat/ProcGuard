@@ -1,6 +1,7 @@
 #include "MsgQueue.hpp"
 #include "ProcStatusMgr.hpp"
 #include "ProcBlackList.hpp"
+#include "commonPathes.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -10,11 +11,6 @@
 #include <unistd.h>
 #include <filesystem>
 
-
-#define PARSER_SCRIPT   "tools/strace_parser.py"
-#define ANALYZER_SCRIPT "tools/proc_analyzer.py"
-#define DATA_FILE       "ml_data/data.json"
-#define PYTHON_PATH     "VENV/bin/python3"
 
 #define MAX_PROCESSES   15
 #define SLEEP           2 // seconds
@@ -30,6 +26,7 @@ static std::vector<pid_t> children;
 static ProcBlackList &ps_bl = ProcBlackList::getInstance();
 static constexpr int max_iterations = 5; // Number of iterations to run strace
 static constexpr int wait_seconds = 1; // Maximum wait time in seconds for strace to finish
+
 
 static void signal_handler(int signum)
 {
@@ -191,7 +188,8 @@ static void ensure_log_path_exists(const std::string& log_path)
 {
     std::filesystem::path p(log_path);
     auto dir = p.parent_path();
-    if (!dir.empty() && !std::filesystem::exists(dir)) {
+    if (!dir.empty() && !std::filesystem::exists(dir))
+    {
         std::filesystem::create_directories(dir);
     }
 }

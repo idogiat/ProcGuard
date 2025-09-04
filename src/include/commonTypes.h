@@ -13,7 +13,6 @@ enum class ProcStatus : uint8_t
 };
 
 
-
 inline const char* ProcStatusToString(ProcStatus status) {
     switch (status) {
         case ProcStatus::OK: return "OK";
@@ -25,6 +24,7 @@ inline const char* ProcStatusToString(ProcStatus status) {
         default: return "UNKNOWN";
     }
 }
+
 
 enum class ProcType : uint8_t
 {

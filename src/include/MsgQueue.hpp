@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "commonTypes.h"
 #include <sys/msg.h>
 #include <cstring>
 #include <stdexcept>

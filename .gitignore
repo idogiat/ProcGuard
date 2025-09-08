@@ -40,7 +40,9 @@
 # debug information files
 *.dwo
 job*
+*_job
 VENV/
 .vscode/
 build/
 *.log
+ps_snapshot.db

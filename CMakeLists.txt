@@ -22,11 +22,16 @@ set(COMMON_SRCS
     src/common/ProcBlackList.cpp
     src/common/ProcUtils.cpp
     )
+
+set(PROC_WATCHER_SRCS
+    src/common/ProcWatcherHandlers/DStraceHandler.cpp
+    src/common/ProcWatcherHandlers/SPMemHandler.cpp
+    )
     
-    # -------------------
-    # GUI target: ProcGui
-    # -------------------
-    add_executable(ProcGui
+# -------------------
+# GUI target: ProcGui
+# -------------------
+add_executable(ProcGui
     src/targets/ProcGui.cpp
     src/common/ProcGuiHandler.cpp
     src/include/ProcGuiHandler.hpp
@@ -51,6 +56,7 @@ target_link_libraries(ProcMonitor pthread rt sqlite3 stdc++fs)
 add_executable(ProcWatcher
     src/targets/ProcWatcher.cpp
     ${COMMON_SRCS}
+    ${PROC_WATCHER_SRCS}
 )
 
 target_link_libraries(ProcWatcher pthread rt sqlite3 stdc++fs)

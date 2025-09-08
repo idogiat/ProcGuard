@@ -7,15 +7,18 @@
 class IDHandler
 {
 protected:
-    int pid;
-    std::filesystem::path file_collect;
-    std::filesystem::path file_analyze;
+    std::string m_file_collect;
+    std::string m_file_analyze;
 
 public:
-    explicit IDHandler(const std::filesystem::path& folder_path, int pid) : pid(pid) {};
+    explicit IDHandler(std::string file_collect, std::string file_analyze)
+    {
+        m_file_collect = file_collect;
+        m_file_analyze = file_analyze;
+    }
 
     virtual ~IDHandler() = default;
 
-    virtual int collect(int time) = 0;
-    virtual int analyze() = 0;
+    virtual int collect(const std::filesystem::path& folder_path, int pid, int time) = 0;
+    virtual int analyze(const std::filesystem::path& folder_path, int pid) = 0;
 };

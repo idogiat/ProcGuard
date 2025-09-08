@@ -2,7 +2,7 @@
 #include "ProcStatusMgr.hpp"
 #include "ProcBlackList.hpp"
 #include "MsgQueue.hpp"
-#include "common.h"
+#include "commonTypes.h"
 #include <thread>
 #include <chrono>
 #include <iostream>

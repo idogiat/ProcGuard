@@ -2,12 +2,17 @@
 #pragma once
 #include "IDHandler.hpp"
 
+
 class DStraceHandler : public IDHandler
 {
 public:
-    DStraceHandler(const std::filesystem::path& folder_path, int pid);
-    ~DStraceHandler() override = default;
+    static constexpr const char* COLLECT_FILE = "strace.log";
+    static constexpr const char* ANALYZE_FILE = "strace.json";
 
-    int collect(int time) override;
-    int analyze(void) override;
+public:
+    DStraceHandler();
+    ~DStraceHandler() override = default;
+    
+    int collect(const std::filesystem::path& folder_path, int pid, int time) override;
+    int analyze(const std::filesystem::path& folder_path, int pid) override;
 };

@@ -5,13 +5,13 @@
 #include <string>
 #include <filesystem>
 
+#define INTERVALS_DEFAULT 3
+#define TIME_DEFAULT 5
 
 class ISPHandler
 {
-private:
-    int pid;
-
 protected:
+    int pid;
     std::filesystem::path pid_folder;
 
 public:
@@ -24,7 +24,18 @@ public:
         }
     }
 
-    virtual ~ISPHandler() {};
-    virtual void watch() = 0;
-    virtual void analyze() = 0;
+    virtual ~ISPHandler() = default;
+
+    /*
+     * Watch the suspect process for a certain number of intervals,
+     * each interval lasting a certain amount of time.
+     * Returns 0 on success, non-zero on failure.
+    */
+    virtual int watch(int intervals = INTERVALS_DEFAULT, int time = TIME_DEFAULT) = 0;
+
+    /*
+     * Analyze the collected data.
+     * Returns 0 on success, non-zero on failure.
+    */
+    virtual int analyze() = 0;
 };
